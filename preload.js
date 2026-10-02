@@ -26,6 +26,12 @@ contextBridge.exposeInMainWorld('platine', {
   choisirImage: () => appeler('pochette:choisir'),
   enregistrerPerso: (perso) => appeler('perso:enregistrer', perso),
   rapportSpotify: () => appeler('spotify:rapport'),
+  duree: (fichier) => appeler('piste:duree', fichier),
+  mix: {
+    youtube: (lien) => appeler('mix:youtube', lien),
+    analyser: (texte) => appeler('mix:analyser', texte),
+    decouper: (options) => appeler('mix:decouper', options)
+  },
   nettoyerSpotify: () => appeler('spotify:nettoyer'),
   masquerAlbum: (nom) => appeler('album:masquer', nom),
   pochettePlaylist: (cle, image) => appeler('playlist:pochette', cle, image),

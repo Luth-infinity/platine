@@ -6,6 +6,7 @@ const spicetify = require('./lib/spicetify')
 const liaison = require('./lib/liaison')
 const maj = require('./lib/maj')
 const indexSpotify = require('./lib/indexSpotify')
+const mix = require('./lib/mix')
 
 const FICHIER_REGLAGES = path.join(app.getPath('userData'), 'reglages.json')
 // Images de playlists choisies dans Platine, une par playlist (clé de l'extension).
@@ -413,6 +414,32 @@ async function consignes() {
 // En version installée, l'extension est sortie de l'archive asar (asarUnpack).
 const SOURCE_EXTENSION = path.join(__dirname, 'spicetify/platine.js').replace('app.asar', 'app.asar.unpacked')
 
+// Découpage d'un mix en morceaux.
+gerer('piste:duree', (fichier) => mix.duree(reel(fichier)))
+gerer('mix:youtube', (lien) => mix.tracklistYouTube(lien))
+gerer('mix:analyser', (texte) => mix.analyser(texte))
+gerer('mix:decouper', async ({ fichier, texte, album, artiste, pochette, corbeille }) => {
+  const { dossier, sansAccents } = lireReglages()
+  const image = pochette ? Buffer.from(pochette.split(',')[1], 'base64') : biblio.pochette(reel(fichier))?.data || null
+  const propre = (t) => (sansAccents ? biblio.simplifier(biblio.lisible(t)) : biblio.lisible(t))
+  const deposes = await mix.decouper({
+    source: reel(fichier),
+    pistes: mix.analyser(texte),
+    album,
+    artiste,
+    pochette: image,
+    dossier,
+    propre,
+    avancement: (i, n, titre) => envoyer('mix:avancement', { i, n, titre })
+  })
+  if (corbeille) {
+    ecritsParMoi.set(fichier, Date.now() + 5000)
+    await shell.trashItem(fichier)
+    envoyer('piste:retiree', fichier)
+  }
+  liaison.signaler()
+  return { morceaux: deposes.length, album: propre(album) }
+})
 gerer('maj:etat', () => maj.etatMaj())
 gerer('maj:installer', () => maj.installer())
 gerer('spicetify:statut', () => spicetify.statut())

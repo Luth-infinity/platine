@@ -120,12 +120,14 @@ function choisir(fichier) {
   fermerTiroirs()
   remplirFiche()
   scene.definir(urlPochette(m))
+  majBoutonMix()
 }
 
 function remplirFiche() {
   // Mode playlist : nom et image seulement.
   const enPlaylist = !!fichePlaylist
   $('#fiche').classList.toggle('mode-playlist', enPlaylist)
+  if (enPlaylist) $('#btn-mix').hidden = true
   if (enPlaylist) {
     $('#fiche').hidden = false
     const n = fichiersDe(fichePlaylist).length
@@ -1025,4 +1027,155 @@ $('#btn-nettoyer').addEventListener('click', async () => {
   } catch (err) {
     toast(err.message)
   }
+})
+
+/* ---------- Découpage d'un mix ---------- */
+
+const MIX_MIN = 10 * 60 // en dessous de 10 minutes, ce n'est pas un mix
+const mixe = { fichier: null, duree: 0, pochette: null, dureeVideo: 0 }
+const minutes = (s) => {
+  s = Math.max(0, Math.round(s))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = String(s % 60).padStart(2, '0')
+  return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`
+}
+
+// Le bouton n'apparaît que sur un fichier long.
+async function majBoutonMix() {
+  const fichier = choisi
+  $('#btn-mix').hidden = true
+  if (!fichier || fichePlaylist) return
+  const m = morceaux.get(fichier)
+  if (m.duree === undefined) m.duree = await api.duree(fichier).catch(() => 0)
+  if (choisi === fichier && !fichePlaylist) $('#btn-mix').hidden = m.duree < MIX_MIN
+}
+
+async function apercuMix() {
+  const pistes = await api.mix.analyser($('#tracklist').value)
+  const liste = $('#apercu-mix')
+  const valides = pistes.filter((p) => p.debut < mixe.duree - 5)
+  liste.replaceChildren(
+    ...valides.map((p, i) => {
+      const fin = i + 1 < valides.length ? valides[i + 1].debut : mixe.duree
+      const li = document.createElement('li')
+      li.innerHTML = `<span class="num">${String(i + 1).padStart(2, '0')}</span><span class="t">${minutes(p.debut)}</span><span>${echapper(p.artiste ? `${p.artiste} – ${p.titre}` : p.titre)}</span><span class="d">${minutes(fin - p.debut)}</span>`
+      return li
+    })
+  )
+  const bouton = $('#btn-decouper')
+  bouton.disabled = valides.length < 2
+  bouton.textContent = valides.length >= 2 ? `Découper en ${valides.length} morceaux` : 'Découper'
+}
+
+async function chargerTracklist(lien, carte) {
+  document.querySelectorAll('.video-mix').forEach((b) => b.classList.toggle('actif', b === carte))
+  const etat = $('#etat-mix')
+  etat.innerHTML = '<span class="rond"></span> Lecture de la description et des 10 premiers commentaires…'
+  try {
+    const r = await api.mix.youtube(lien)
+    mixe.dureeVideo = r.duree
+    if (!$('#album-mix').value.trim() || $('#album-mix').dataset.auto === 'oui') {
+      $('#album-mix').value = r.titreVideo
+      $('#album-mix').dataset.auto = 'oui'
+    }
+    // Pochette du mix : la sienne s'il en a une, sinon la miniature de la vidéo.
+    if (!morceaux.get(mixe.fichier)?.aPochette) {
+      const mini = await api.miniatureYouTube(lien).catch(() => null)
+      if (mini) mixe.pochette = await carre(mini.image, mini.bandes)
+    }
+    if (r.source) {
+      $('#tracklist').value = r.texte
+      const ecart = r.duree && Math.abs(r.duree - mixe.duree)
+      etat.textContent = `Tracklist trouvée dans ${r.source}.` + (ecart > 15 ? ` Attention : la vidéo dure ${minutes(r.duree)} et ton fichier ${minutes(mixe.duree)}, les coupes risquent d’être décalées.` : '')
+    } else {
+      etat.textContent = `Pas de tracklist dans la description ni dans les ${r.commentairesLus} premiers commentaires. Colle-la ci-dessous.`
+    }
+  } catch (err) {
+    etat.textContent = err.message
+  }
+  apercuMix()
+}
+
+// Carré pris au centre d'une miniature (bandes noires des 4:3 écartées).
+async function carre(source, bandes) {
+  const img = await chargerImage(source)
+  const haut = bandes ? img.height * 0.125 : 0
+  const hauteur = bandes ? img.height * 0.75 : img.height
+  const cote = Math.min(img.width, hauteur)
+  const c = document.createElement('canvas')
+  c.width = c.height = Math.round(cote)
+  c.getContext('2d').drawImage(img, (img.width - cote) / 2, haut + (hauteur - cote) / 2, cote, cote, 0, 0, cote, cote)
+  return c.toDataURL('image/jpeg', 0.92)
+}
+
+async function ouvrirMix() {
+  const m = morceaux.get(choisi)
+  if (!m) return
+  Object.assign(mixe, { fichier: m.fichier, duree: m.duree || (await api.duree(m.fichier)), pochette: null, dureeVideo: 0 })
+  $('#titre-mix').textContent = `Découper « ${m.titre || m.nom} »`
+  $('#intro-mix').textContent = `${minutes(mixe.duree)} de musique. Platine coupe le fichier aux minutages de la tracklist, sans perte de qualité, et range les morceaux dans une playlist au nom de l’album.`
+  $('#tracklist').value = ''
+  $('#album-mix').value = m.album || m.titre || ''
+  $('#album-mix').dataset.auto = m.album ? 'non' : 'oui'
+  $('#artiste-mix').value = m.artiste && m.artiste !== 'Artiste inconnu' ? m.artiste : ''
+  $('#etat-mix').textContent = ''
+  $('#apercu-mix').replaceChildren()
+  $('#btn-decouper').disabled = true
+  $('#btn-decouper').textContent = 'Découper'
+  $('#voile-mix').hidden = false
+  // Vidéos candidates, d'après le titre du fichier.
+  const zone = $('#videos-mix')
+  zone.innerHTML = '<span class="rond"></span>'
+  try {
+    const videos = (await api.rechercherYouTube(`${m.artiste === 'Artiste inconnu' ? '' : m.artiste} ${m.titre}`.trim())).slice(0, 4)
+    zone.innerHTML = videos
+      .map((v, i) => `<button class="video-mix" data-i="${i}" title="${echapper(v.titre)}"><img src="${echapper(v.vignette)}" alt="" /><b>${echapper(v.titre)}</b><small>${echapper(v.chaine)} · ${echapper(v.duree)}</small></button>`)
+      .join('')
+    zone.querySelectorAll('.video-mix').forEach((b) => b.addEventListener('click', () => chargerTracklist(`https://youtu.be/${videos[+b.dataset.i].id}`, b)))
+  } catch {
+    zone.textContent = ''
+  }
+}
+
+$('#btn-mix').addEventListener('click', ouvrirMix)
+$('#btn-mix-fermer').addEventListener('click', () => ($('#voile-mix').hidden = true))
+$('#form-lien-mix').addEventListener('submit', (e) => {
+  e.preventDefault()
+  chargerTracklist(e.target.querySelector('input').value, null)
+})
+$('#tracklist').addEventListener('input', apercuMix)
+$('#album-mix').addEventListener('input', () => ($('#album-mix').dataset.auto = 'non'))
+api.sur('mix:avancement', ({ i, n, titre }) => {
+  $('#btn-decouper').innerHTML = `<span class="rond"></span> ${i}/${n}`
+  $('#etat-mix').textContent = titre
+})
+
+$('#btn-decouper').addEventListener('click', async () => {
+  const bouton = $('#btn-decouper')
+  bouton.disabled = true
+  const album = $('#album-mix').value.trim() || 'Mix'
+  try {
+    const r = await api.mix.decouper({
+      fichier: mixe.fichier,
+      texte: $('#tracklist').value,
+      album,
+      artiste: $('#artiste-mix').value.trim(),
+      pochette: mixe.pochette,
+      corbeille: $('#corbeille-mix').checked
+    })
+    // La playlist de l'album prend la pochette du mix.
+    const source = mixe.pochette || urlPochette(morceaux.get(mixe.fichier))
+    if (source && reglages.parAlbum) {
+      reglages = await api.pochettePlaylist(`album:${r.album}`, await versJpegPlaylist(source)).catch(() => reglages)
+    }
+    $('#voile-mix').hidden = true
+    toast(`${r.morceaux} morceaux créés. La playlist « ${r.album} » arrive dans Spotify.`)
+    await chargerBibliotheque()
+  } catch (err) {
+    toast(err.message)
+    $('#etat-mix').textContent = err.message
+  }
+  bouton.disabled = false
+  apercuMix()
 })

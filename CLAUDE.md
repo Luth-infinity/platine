@@ -53,6 +53,18 @@ seule) est acceptée.
 - Téléphone resté sur l'ancienne playlist : Paramètres Android → Applications →
   Spotify → Stockage → Vider le cache.
 
+## Découpage des mix (`lib/mix.js`)
+
+Fichier de plus de 10 min → bouton « Découper ce mix ». Tracklist : collée, ou
+lue dans la description puis les **10 premiers commentaires** de la vidéo (page
+`watch` : `ytInitialPlayerResponse` + jeton de la section commentaires rejoué
+sur `youtubei/v1/next`, texte dans `commentEntityPayload`). Extraction JSON par
+comptage d'accolades (pas de `;</script>` collé). On garde la plus longue suite
+de minutages croissants (≥ 3). Coupe `-ss … -t … -c copy` (sans réencodage),
+fichiers préparés hors du dossier puis déplacés finis (aucun fantôme Spotify),
+album = nom du mix → playlist d'album automatique avec la pochette du mix.
+Jamais l'audio de la vidéo : seulement du texte et la miniature.
+
 ## Spicetify (`lib/spicetify.js`)
 
 Installé à la demande depuis la release GitHub officielle (Windows :

@@ -351,3 +351,27 @@ input::placeholder { color: var(--tres-doux); }
 [data-plateforme="darwin"] .barre { padding: 0 16px 0 84px; }
 .pastille.maj { color: var(--texte); background: var(--surface); box-shadow: inset 0 0 0 1px var(--bord-fort); }
 .boutons .espace { flex: 1; }
+
+/* Découpage d'un mix */
+.fenetre-mix { width: min(640px, 100%); max-height: calc(100vh - 80px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.fenetre-mix h2 { margin-bottom: 0; }
+.fenetre-mix .intro { margin-bottom: 4px; }
+.videos-mix { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.video-mix { flex: none; width: 150px; text-align: left; border-radius: 10px; padding: 5px; background: oklch(0 0 0 / 0.2); box-shadow: inset 0 0 0 1px var(--bord); transition: background 0.2s var(--ease); }
+.video-mix:hover { background: var(--survol); }
+.video-mix.actif { box-shadow: inset 0 0 0 1.5px var(--texte); }
+.video-mix img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; }
+.video-mix b, .video-mix small { display: block; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; }
+.video-mix small { color: var(--doux); margin-top: 0; }
+#tracklist { width: 100%; resize: vertical; border: 0; outline: none; border-radius: 9px; padding: 10px 12px; background: oklch(0 0 0 / 0.25); box-shadow: inset 0 0 0 1px var(--bord); color: var(--texte); font: 12px/1.6 'Cascadia Mono', Consolas, monospace; user-select: text; }
+.apercu-mix { list-style: none; max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.apercu-mix li { display: grid; grid-template-columns: 28px 64px 1fr 52px; gap: 8px; font-size: 12px; padding: 4px 8px; border-radius: 7px; }
+.apercu-mix li:nth-child(odd) { background: oklch(1 0 0 / 0.03); }
+.apercu-mix .num, .apercu-mix .t, .apercu-mix .d { color: var(--tres-doux); font-variant-numeric: tabular-nums; }
+.apercu-mix .d { text-align: right; }
+.apercu-mix li span:nth-child(3) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fenetre-mix .ligne-champs .champ-plein { flex: 1; }
+.fenetre-mix > * { flex-shrink: 0; }
+.videos-mix::-webkit-scrollbar, .apercu-mix::-webkit-scrollbar, .fenetre-mix::-webkit-scrollbar { width: 8px; height: 8px; }
+.videos-mix::-webkit-scrollbar-thumb, .apercu-mix::-webkit-scrollbar-thumb, .fenetre-mix::-webkit-scrollbar-thumb { background: var(--bord-fort); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+.videos-mix::-webkit-scrollbar-button, .apercu-mix::-webkit-scrollbar-button, .fenetre-mix::-webkit-scrollbar-button { display: none; }

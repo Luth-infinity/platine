@@ -84,6 +84,7 @@
 
         <div class="pied-fiche">
           <span class="source" id="source"></span>
+          <button class="secondaire" id="btn-mix" hidden>Découper ce mix</button>
           <button class="secondaire" id="btn-annuler" hidden>Annuler</button>
           <button class="principal" id="btn-enregistrer" disabled>Enregistrer</button>
         </div>
@@ -154,6 +155,31 @@
         <button class="secondaire" id="btn-playlist-fermer">Fermer</button>
         <button class="secondaire" id="btn-playlist-desactiver" hidden>Désactiver</button>
         <button class="principal" id="btn-playlist-activer">Activer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="voile" id="voile-mix" hidden>
+    <div class="fenetre-aide fenetre-mix" role="dialog" aria-labelledby="titre-mix">
+      <h2 id="titre-mix">Découper le mix</h2>
+      <p class="intro" id="intro-mix"></p>
+      <span class="etiquette-outils">Vidéo du mix, pour trouver sa tracklist</span>
+      <div class="videos-mix" id="videos-mix"></div>
+      <form class="tiroir" id="form-lien-mix">
+        <input type="url" placeholder="Ou colle le lien de la vidéo" required spellcheck="false" />
+        <button class="secondaire" type="submit">Chercher</button>
+      </form>
+      <p class="etat-spicetify" id="etat-mix"></p>
+      <label class="champ-plein"><span>Tracklist</span><textarea id="tracklist" rows="6" spellcheck="false" placeholder="00:00 Artiste - Titre&#10;03:42 Artiste - Titre"></textarea></label>
+      <ol class="apercu-mix" id="apercu-mix"></ol>
+      <div class="ligne-champs">
+        <label class="champ-plein"><span>Album (nom de la playlist)</span><input id="album-mix" spellcheck="false" /></label>
+        <label class="champ-plein"><span>Artiste si la ligne n’en a pas</span><input id="artiste-mix" spellcheck="false" /></label>
+      </div>
+      <label class="case"><input type="checkbox" id="corbeille-mix" checked /><span>Mettre le mix entier à la corbeille<small>Il reste récupérable dans la corbeille.</small></span></label>
+      <div class="boutons">
+        <button class="secondaire" id="btn-mix-fermer">Annuler</button>
+        <button class="principal" id="btn-decouper" disabled>Découper</button>
       </div>
     </div>
   </div>
