@@ -448,6 +448,7 @@ async function chargerReglages() {
   $('#chemin-aide').textContent = reglages.dossier
   $('#nom-playlist').value = reglages.playlist
   $('#par-album').checked = reglages.parAlbum
+  $('#sans-accents').checked = reglages.sansAccents !== false
 }
 
 async function chargerBibliotheque() {
@@ -1007,3 +1008,12 @@ function afficherMaj(e) {
 api.sur('maj', afficherMaj)
 api.maj.etat().then(afficherMaj)
 $('#btn-maj').addEventListener('click', () => api.maj.installer().catch((err) => toast(err.message)))
+
+// Activer l'option corrige aussi les morceaux déjà dans le dossier.
+$('#sans-accents').addEventListener('change', async (e) => {
+  reglages = await api.ecrireReglages({ sansAccents: e.target.checked })
+  if (e.target.checked) {
+    await chargerBibliotheque()
+    toast('Les infos de tes morceaux vont être simplifiées.')
+  }
+})

@@ -13,7 +13,7 @@ const fichierPochette = (cle) => path.join(DOSSIER_POCHETTES, `${Buffer.from(cle
 const AU_DEMARRAGE = process.argv.includes('--cache')
 
 function lireReglages() {
-  const defauts = { dossier: path.join(app.getPath('music'), 'MP3'), playlist: 'Mes MP3', parAlbum: true, perso: [], supprimees: [], albumsMasques: [], pochettesPlaylists: {}, modeAvance: false, accueilVu: false }
+  const defauts = { dossier: path.join(app.getPath('music'), 'MP3'), playlist: 'Mes MP3', parAlbum: true, perso: [], supprimees: [], albumsMasques: [], pochettesPlaylists: {}, modeAvance: false, sansAccents: true, accueilVu: false }
   try {
     const r = { ...defauts, ...JSON.parse(fs.readFileSync(FICHIER_REGLAGES, 'utf8')) }
     // Chaque playlist à toi a un identifiant stable : c'est lui qui permet à
@@ -192,7 +192,7 @@ async function traiter(fichier) {
   if (!biblio.estAudio(fichier) || enPreparation.has(fichier)) return
   enPreparation.add(fichier)
   try {
-    const resultat = await biblio.preparer(fichier)
+    const resultat = await biblio.preparer(fichier, { sansAccents: lireReglages().sansAccents })
     if (resultat) {
       const pret = resultat.fichier
       ecritsParMoi.set(pret, Date.now() + 3000)
@@ -248,7 +248,8 @@ gerer('bibliotheque:lister', async () => {
     }
     const infos = await biblio.infos(f).catch(() => null)
     // Fichiers arrivés pendant que Platine était fermée : même passe qu'à l'arrivée.
-    if (infos && (!infos.titre || biblio.nettoyer(infos.titre) !== infos.titre)) traiter(f)
+    const aCorriger = infos && Object.keys(biblio.corrections(infos, { sansAccents: lireReglages().sansAccents })).length
+    if (infos && (!infos.titre || !infos.artiste || aCorriger || biblio.nettoyer(infos.titre) !== infos.titre)) traiter(f)
     liste.push(infos)
   }
   return liste.filter(Boolean)
@@ -272,7 +273,7 @@ gerer('bibliotheque:ajouter', async (chemins) => {
 })
 gerer('piste:enregistrer', async (fichier, modifs) => {
   ecritsParMoi.set(fichier, Date.now() + 3000)
-  const infos = await biblio.enregistrer(reel(fichier), modifs)
+  const infos = await biblio.enregistrer(reel(fichier), modifs, { sansAccents: lireReglages().sansAccents })
   liaison.signaler()
   faireRelire(fichier)
   return { ...infos, fichier, nom: path.basename(fichier) }
@@ -425,6 +426,12 @@ if (!app.requestSingleInstanceLock()) {
       }
     })
   })
-  app.on('before-quit', () => (quitter = true))
+  app.on('before-quit', () => {
+    quitter = true
+    // Jamais de fichier laissé caché par une relecture en cours.
+    for (const [fichier, etat] of relectures) {
+      if (etat.cache && fs.existsSync(etat.cache) && !fs.existsSync(fichier)) fs.renameSync(etat.cache, fichier)
+    }
+  })
   app.on('window-all-closed', () => {})
 }

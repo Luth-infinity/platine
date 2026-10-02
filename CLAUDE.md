@@ -42,6 +42,10 @@ seule) est acceptée.
   alors la playlist une fois.
 - Spotify ne relit pas un fichier déjà connu : après chaque modification,
   Platine le cache 8 s (`.mp3.platine`) puis le remet (`faireRelire`).
+- Spotify ne lit pas depuis une playlist un fichier **sans artiste**, ni (constaté
+  avec « À ») certains titres accentués : Platine met toujours un artiste
+  (déduit du nom, sinon « Artiste inconnu ») et simplifie accents et signes
+  typographiques (`simplifier`, option `sansAccents`, active par défaut).
 - **Ne jamais toucher `Spotify/Users/<id>-user/local-files.bnk`** : c'est la
   liste des dossiers sources, pas un cache.
 - Téléphone resté sur l'ancienne playlist : Paramètres Android → Applications →
