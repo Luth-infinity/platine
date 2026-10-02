@@ -14,8 +14,12 @@ seule) est acceptée.
 ## Liaison avec Spotify
 
 - Serveur local `127.0.0.1:47321` (`lib/liaison.js`) : `GET /consignes`,
-  `POST /rapport`, `GET /rapport`, `GET /pochette/<clé>`. L'extension interroge
-  toutes les 5 s (1/min quand Spotify est en arrière-plan, Chromium bride).
+  `POST /rapport`, `GET /rapport`, `GET /pochette/<clé>`, `GET /attendre?v=`.
+  L'extension garde `/attendre` ouvert et se synchronise dès que Platine appelle
+  `liaison.signaler()` (~1,5 s mesuré, Spotify en arrière-plan) ; les minuteurs,
+  eux, tombent à 1/min en arrière-plan. Tout changement de consigne doit passer
+  par `signaler()` (fait dans `ecrireReglages`, l'enregistrement, la relecture).
+- Rapport : `illisibles` liste les entrées que Spotify ne sait pas lire.
 - **Une Platine de test sert le même port** et le vrai Spotify lui obéit :
   lancer les tests avec `PLATINE_SANS_LIAISON=1`.
 - Clés de playlist : `generale`, `perso:<id>`, `album:<nom>` → uri, gardées dans
