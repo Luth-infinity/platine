@@ -20,7 +20,18 @@ permissions:
   contents: write
 
 jobs:
+  # Un seul brouillon, créé avant les constructions : lancées en parallèle,
+  # elles en créaient chacune un (le .dmg Intel s'était perdu dans le second).
+  brouillon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || gh release create "${GITHUB_REF_NAME}" --draft --title "${GITHUB_REF_NAME#v}" --notes ""
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   windows:
+    needs: brouillon
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +47,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
   macos:
+    needs: brouillon
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

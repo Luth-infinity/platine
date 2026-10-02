@@ -95,10 +95,10 @@ function ajuster(g, texte, largeur, max, depart, poids = 800) {
 }
 
 // Bloc titre + artiste aligné en bas à gauche.
-function texteBas(g, { titre, artiste, texte }, couleurTexte, { marge = 80, bas = T - 80, majuscules = true, poids = 800 } = {}) {
+function texteBas(g, { titre, artiste, texte }, couleurTexte, { marge = 80, bas = T - 80, majuscules = true, poids = 800, max = 3, depart = 150 } = {}) {
   if (texte === 'aucun') return
   const t = majuscules ? titre.toUpperCase() : titre
-  const { taille, lignes: l } = ajuster(g, t, T - marge * 2, 3, 150, poids)
+  const { taille, lignes: l } = ajuster(g, t, T - marge * 2, max, depart, poids)
   g.fillStyle = couleurTexte
   g.textBaseline = 'alphabetic'
   g.font = police(poids, taille)
@@ -229,7 +229,8 @@ const dessins = {
   },
 
   ondes(g, o) {
-    const sombre = !estClaire(o.couleur)
+    // Le fond contraste avec la couleur des ondes.
+    const sombre = estClaire(o.couleur)
     g.fillStyle = sombre ? '#0d0d10' : '#f4f2ec'
     g.fillRect(0, 0, T, T)
     g.strokeStyle = o.couleur
@@ -286,9 +287,10 @@ const dessins = {
       g.drawImage(img, (img.width - c) / 2, (img.height - c) / 2, c, c, (i % n) * cote, Math.floor(i / n) * cote, cote, cote)
     })
     if (o.texte !== 'aucun') {
+      // Le titre tient dans le bandeau : une ligne, corps réduit si besoin.
       g.fillStyle = o.couleur
-      g.fillRect(0, T * 0.74, T, T * 0.26)
-      texteBas(g, { ...o, artiste: o.texte === 'titre' ? '' : o.artiste }, estClaire(o.couleur) ? '#121214' : '#ffffff', { bas: T - 70 })
+      g.fillRect(0, T * 0.78, T, T * 0.22)
+      texteBas(g, { ...o, artiste: '' }, estClaire(o.couleur) ? '#121214' : '#ffffff', { bas: T - 70, max: 1, depart: 110 })
     }
   }
 }
