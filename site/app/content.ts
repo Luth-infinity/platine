@@ -70,7 +70,8 @@ export const fr: Contenu = {
       { nom: 'Une playlist générale', texte: 'Tout ton dossier, toujours à jour.' },
       { nom: 'Une par album', texte: 'Dès que deux morceaux partagent un album.' },
       { nom: 'Les tiennes', texte: 'Créées dans Platine, un clic pour y ajouter un morceau.' },
-      { nom: 'Nom et image', texte: 'Renomme une playlist ou change son image : Spotify suit.' }
+      { nom: 'Nom et image', texte: 'Renomme une playlist ou change son image : Spotify suit.' },
+      { nom: 'Mix découpés', texte: 'Un mix d’une heure devient une playlist : tracklist trouvée dans la description ou les commentaires de la vidéo, coupes sans perte.' }
     ]
   },
   honnete: {
@@ -149,7 +150,8 @@ export const en: Contenu = {
       { nom: 'One main playlist', texte: 'Your whole folder, always up to date.' },
       { nom: 'One per album', texte: 'As soon as two tracks share an album.' },
       { nom: 'Your own', texte: 'Made in Platine, one click to add a track.' },
-      { nom: 'Name and image', texte: 'Rename a playlist or change its image: Spotify follows.' }
+      { nom: 'Name and image', texte: 'Rename a playlist or change its image: Spotify follows.' },
+      { nom: 'Split mixes', texte: 'An hour-long mix becomes a playlist: tracklist found in the video description or comments, lossless cuts.' }
     ]
   },
   honnete: {
