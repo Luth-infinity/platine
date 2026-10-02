@@ -204,9 +204,13 @@ async function enregistrerPlaylist() {
       const cle = clePlaylist(p)
       if (cle) reglages = await api.pochettePlaylist(cle, await versJpegPlaylist(brouillon.pochette))
     }
-    brouillon = { titre: p.nom, artiste: '', album: '', annee: '', pochette: null }
-    fermerTiroirs()
-    remplirFiche()
+    // Si on a déjà quitté cette playlist (clic sur un morceau pendant
+    // l'enregistrement), la fiche affichée n'est plus la sienne : on n'y touche pas.
+    if (fichePlaylist === p) {
+      brouillon = { titre: p.nom, artiste: '', album: '', annee: '', pochette: null }
+      fermerTiroirs()
+      remplirFiche()
+    }
     rendreListe()
     toast('Enregistré. Spotify suit dans quelques secondes.')
   } catch (err) {

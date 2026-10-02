@@ -265,7 +265,29 @@
     }
   }
 
+  // Platine prévient dès qu'une consigne change (requête gardée ouverte) :
+  // la playlist suit en une seconde même quand Spotify est en arrière-plan,
+  // où Windows ralentit les minuteurs à une fois par minute. Une seconde
+  // passe, un peu plus tard, laisse à Spotify le temps de relire un fichier.
+  async function veiller() {
+    let v = -1
+    for (;;) {
+      try {
+        const r = await fetch(`${PLATINE}/attendre?v=${v}`)
+        const { v: nouvelle } = await r.json()
+        if (nouvelle !== v) {
+          v = nouvelle
+          await synchroniser()
+          setTimeout(synchroniser, 4000)
+        }
+      } catch {
+        await new Promise((r) => setTimeout(r, 5000)) // Platine fermée
+      }
+    }
+  }
+
   synchroniser()
+  veiller()
   setInterval(synchroniser, 5000)
   // Spotify rescanne ses sources quand la fenêtre revient au premier plan.
   window.addEventListener('focus', () => setTimeout(synchroniser, 2000))

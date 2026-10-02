@@ -36,6 +36,7 @@ function ecrireReglages(modifs) {
   const reglages = { ...lireReglages(), ...modifs }
   fs.mkdirSync(path.dirname(FICHIER_REGLAGES), { recursive: true })
   fs.writeFileSync(FICHIER_REGLAGES, JSON.stringify(reglages, null, 2))
+  liaison.signaler()
   return reglages
 }
 
@@ -177,13 +178,17 @@ async function cacherPuisRemettre(fichier, etat) {
     if (fs.existsSync(cache) && !fs.existsSync(fichier)) fs.renameSync(cache, fichier)
     ecritsParMoi.set(fichier, Date.now() + 3000)
     relectures.delete(fichier)
+    liaison.signaler()
     if (etat.encore) faireRelire(fichier)
   }
 }
 
 async function traiter(fichier) {
   if ((ecritsParMoi.get(fichier) || 0) > Date.now()) return
-  if (!fs.existsSync(fichier)) return envoyer('piste:retiree', fichier)
+  if (!fs.existsSync(fichier)) {
+    liaison.signaler()
+    return envoyer('piste:retiree', fichier)
+  }
   if (!biblio.estAudio(fichier) || enPreparation.has(fichier)) return
   enPreparation.add(fichier)
   try {
@@ -193,6 +198,7 @@ async function traiter(fichier) {
       ecritsParMoi.set(pret, Date.now() + 3000)
       if (pret !== fichier) envoyer('piste:retiree', fichier)
       envoyer('piste:maj', await biblio.infos(pret))
+      liaison.signaler()
       if (resultat.modifie) faireRelire(pret)
     }
   } catch (err) {
@@ -267,6 +273,7 @@ gerer('bibliotheque:ajouter', async (chemins) => {
 gerer('piste:enregistrer', async (fichier, modifs) => {
   ecritsParMoi.set(fichier, Date.now() + 3000)
   const infos = await biblio.enregistrer(reel(fichier), modifs)
+  liaison.signaler()
   faireRelire(fichier)
   return { ...infos, fichier, nom: path.basename(fichier) }
 })
