@@ -85,6 +85,7 @@ export const fr: Contenu = {
     limites: [
       'La version Microsoft Store de Spotify ne peut pas être modifiée : installe Spotify depuis spotify.com.',
       'Sur Mac, macOS peut demander d’autoriser la modification de Spotify. Platine indique la commande à taper.',
+      'Aucun compte à relier : Platine travaille avec l’app Spotify de l’ordinateur, en gratuit comme en Premium.',
       'Platine ne télécharge pas de musique : elle range les fichiers que tu as déjà.'
     ]
   },
@@ -98,7 +99,7 @@ export const fr: Contenu = {
     premiers: [
       { titre: 'Premier lancement sur Windows', texte: 'Windows ne connaît pas encore Platine : clique sur « Informations complémentaires » puis « Exécuter quand même ».' },
       { titre: 'Premier lancement sur Mac', texte: 'Platine n’est pas signée par Apple : fais un clic droit sur l’app, puis Ouvrir.' },
-      { titre: 'Sur le téléphone', texte: 'Télécharge la playlist dans Spotify, avec le téléphone sur le même Wi-Fi que l’ordinateur.' }
+      { titre: 'Sur le téléphone', texte: 'Télécharge la playlist dans Spotify, avec le téléphone sur le même Wi-Fi que l’ordinateur. Spotify réserve cette étape à Premium : en gratuit, tout fonctionne sur l’ordinateur.' }
     ]
   },
   journal: { titre: 'Versions', vide: 'La première version arrive.' },
@@ -163,6 +164,7 @@ export const en: Contenu = {
     limites: [
       'The Microsoft Store version of Spotify cannot be modified: install Spotify from spotify.com.',
       'On a Mac, macOS may ask before Spotify can be modified. Platine shows the command to type.',
+      'No account to link: Platine works with the Spotify app on your computer, free or Premium.',
       'Platine does not download music: it tidies the files you already have.'
     ]
   },
@@ -176,7 +178,7 @@ export const en: Contenu = {
     premiers: [
       { titre: 'First launch on Windows', texte: 'Windows does not know Platine yet: click “More info”, then “Run anyway”.' },
       { titre: 'First launch on Mac', texte: 'Platine is not signed by Apple: right-click the app, then Open.' },
-      { titre: 'On your phone', texte: 'Download the playlist in Spotify, with your phone on the same Wi-Fi as your computer.' }
+      { titre: 'On your phone', texte: 'Download the playlist in Spotify, with your phone on the same Wi-Fi as your computer. Spotify keeps this step for Premium: on a free account, everything works on the computer.' }
     ]
   },
   journal: { titre: 'Releases', vide: 'The first release is on its way.' },
