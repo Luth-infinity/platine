@@ -8,7 +8,7 @@
   "private": true,
   "scripts": {
     "start": "npm run vendor && electron .",
-    "vendor": "node -e \"for (const f of ['build/three.module.js','build/three.core.js','examples/jsm/environments/RoomEnvironment.js']) require('fs').copyFileSync('node_modules/three/'+f, 'renderer/vendor/'+f.split('/').pop())\"",
+    "vendor": "node -e \"const fs=require('fs');fs.mkdirSync('renderer/vendor',{recursive:true});for (const f of ['build/three.module.js','build/three.core.js','examples/jsm/environments/RoomEnvironment.js']) fs.copyFileSync('node_modules/three/'+f, 'renderer/vendor/'+f.split('/').pop())\"",
     "dist:win": "npm run vendor && electron-builder --win --x64",
     "dist:mac": "npm run vendor && electron-builder --mac"
   },
