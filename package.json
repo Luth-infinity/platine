@@ -1,7 +1,7 @@
 {
   "name": "platine",
   "productName": "Platine",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Ta bibliothèque de MP3, propre dans Spotify",
   "author": "Luth",
   "main": "main.js",

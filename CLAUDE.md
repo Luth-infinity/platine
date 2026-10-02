@@ -46,6 +46,8 @@ seule) est acceptée.
   avec « À ») certains titres accentués : Platine met toujours un artiste
   (déduit du nom, sinon « Artiste inconnu ») et simplifie accents et signes
   typographiques (`simplifier`, option `sansAccents`, active par défaut).
+  Les **crochets** bloquent aussi la lecture : `lisible` les change en
+  parenthèses et retire les étiquettes de début (« [V5] »), toujours appliqué.
 - **Ne jamais toucher `Spotify/Users/<id>-user/local-files.bnk`** : c'est la
   liste des dossiers sources, pas un cache.
 - Téléphone resté sur l'ancienne playlist : Paramètres Android → Applications →
