@@ -1,0 +1,70 @@
+# Construit l'installeur Windows et les deux .dmg, et les joint à la release,
+# avec le `latest.yml` que lit la mise à jour interne (lib/maj.js).
+#
+# Le .dmg ne se construit que sur macOS (hdiutil est un outil Apple). ffmpeg
+# est un binaire propre à chaque processeur : on construit le .dmg Apple
+# Silicon, on retélécharge ffmpeg pour Intel, puis on construit le second.
+#
+# Déclenché par un tag `vX.Y.Z`. Chaque job publie dans une release brouillon,
+# le dernier la rend publique : publier avant que les binaires n'existent
+# afficherait des liens morts sur le site.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run vendor
+      - run: npx electron-builder --win --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run vendor
+      - run: npx electron-builder --mac --arm64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - name: ffmpeg pour Mac Intel
+        # L'installation saute le téléchargement si le binaire existe déjà.
+        run: rm -f node_modules/ffmpeg-static/ffmpeg && npm rebuild ffmpeg-static && file node_modules/ffmpeg-static/ffmpeg
+        env:
+          npm_config_arch: x64
+      - run: npx electron-builder --mac --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+  publier:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sortir la release du brouillon
+        run: gh release edit "${GITHUB_REF_NAME}" --draft=false --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

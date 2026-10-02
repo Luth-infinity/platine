@@ -1,0 +1,83 @@
+{
+  "name": "platine",
+  "productName": "Platine",
+  "version": "0.1.0",
+  "description": "Ta bibliothèque de MP3, propre dans Spotify",
+  "author": "Luth",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "npm run vendor && electron .",
+    "vendor": "node -e \"for (const f of ['build/three.module.js','build/three.core.js','examples/jsm/environments/RoomEnvironment.js']) require('fs').copyFileSync('node_modules/three/'+f, 'renderer/vendor/'+f.split('/').pop())\"",
+    "dist:win": "npm run vendor && electron-builder --win --x64",
+    "dist:mac": "npm run vendor && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.luth.platine",
+    "productName": "Platine",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "lib/**/*",
+      "renderer/**/*",
+      "spicetify/**/*",
+      "build/icon.png",
+      "build/tray.png",
+      "build/trayTemplate.png",
+      "build/trayTemplate@2x.png"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**/*",
+      "spicetify/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "Luth-infinity",
+      "repo": "platine"
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "category": "public.app-category.music",
+      "icon": "build/icon.png",
+      "identity": null,
+      "hardenedRuntime": false,
+      "target": [
+        "dmg"
+      ]
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "ffmpeg-static": "^5.3.0",
+    "node-id3": "^0.2.9",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "electron": "^41.10.7",
+    "electron-builder": "^26.15.3"
+  },
+  "repository": "https://github.com/Luth-infinity/platine",
+  "license": "MIT"
+}

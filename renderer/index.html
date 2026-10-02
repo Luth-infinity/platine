@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: pochette:; connect-src 'self' data: blob: https: pochette:; style-src 'self' 'unsafe-inline'" />
+  <title>Platine</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js" } }
+  </script>
+</head>
+<body>
+  <header class="barre">
+    <div class="marque">
+      <svg viewBox="0 0 24 24" class="logo" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg>
+      <span>Platine</span>
+    </div>
+    <div class="actions-barre">
+      <button class="pastille maj" id="btn-maj" hidden></button>
+      <button class="pastille" id="btn-dossier" title="Changer de dossier">
+        <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span id="nom-dossier">…</span>
+      </button>
+      <button class="pastille" id="btn-playlist" title="Playlist automatique dans Spotify">
+        <span class="point" id="point-playlist"></span>
+        <span id="texte-playlist">Playlist</span>
+      </button>
+      <button class="icone" id="btn-aide" title="Relier le dossier à Spotify">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="17" r=".9" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="corps">
+    <section class="platine">
+      <div class="scene"><canvas id="scene"></canvas></div>
+
+      <div class="fiche" id="fiche" hidden>
+        <div class="entete-fiche">
+          <input class="grand-titre" data-cle="titre" placeholder="Titre" spellcheck="false" />
+          <input class="grand-artiste" data-cle="artiste" placeholder="Artiste" spellcheck="false" />
+          <span class="sous-titre-playlist" id="sous-titre-playlist"></span>
+        </div>
+        <div class="ligne-champs">
+          <label class="champ"><span>Album</span><input data-cle="album" placeholder="—" spellcheck="false" /></label>
+          <label class="champ court"><span>Année</span><input data-cle="annee" placeholder="—" spellcheck="false" maxlength="4" /></label>
+        </div>
+
+        <div class="outils-pochette">
+          <span class="etiquette-outils">Pochette</span>
+          <button class="outil" data-outil="youtube">
+            <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 9.6v4.8l4-2.4z" fill="currentColor"/></svg>
+            Image YouTube
+          </button>
+          <button class="outil" data-outil="importer">
+            <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9.5" cy="9.5" r="1.6" fill="currentColor"/><path d="M5 17l4.5-4.5 3 3 2.5-2.5L19 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            Importer
+          </button>
+          <button class="outil" data-outil="generer">
+            <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" fill="currentColor"/></svg>
+            Générer
+          </button>
+          <button class="outil" data-outil="chercher">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Chercher
+          </button>
+        </div>
+
+        <div class="ligne-playlists">
+          <span class="etiquette-outils">Playlists</span>
+          <div class="puces" id="puces-playlists"></div>
+        </div>
+
+        <form class="tiroir" id="tiroir-youtube" hidden>
+          <input type="url" placeholder="Ou colle le lien de la vidéo" required spellcheck="false" />
+          <button class="secondaire" type="submit">Récupérer</button>
+        </form>
+        <div class="tiroir cadrage" id="tiroir-cadrage" hidden>
+          <span>Cadrage</span>
+          <input type="range" min="0" max="100" value="50" id="cadrage" />
+        </div>
+        <div class="tiroir studio" id="tiroir-studio" hidden></div>
+        <div class="tiroir suggestions" id="tiroir-suggestions" hidden></div>
+
+        <div class="pied-fiche">
+          <span class="source" id="source"></span>
+          <button class="secondaire" id="btn-annuler" hidden>Annuler</button>
+          <button class="principal" id="btn-enregistrer" disabled>Enregistrer</button>
+        </div>
+      </div>
+
+      <div class="accueil-scene" id="accueil-scene">
+        <h1>Ta platine est vide</h1>
+        <p>Dépose des MP3 ici, ou directement dans ton dossier.</p>
+      </div>
+    </section>
+
+    <aside class="bibliotheque">
+      <div class="outils-liste">
+        <div class="recherche">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="filtre" placeholder="Rechercher" spellcheck="false" />
+        </div>
+        <div class="segments" id="segments">
+          <button class="actif" data-vue="tout">Tout <b id="nb-tout">0</b></button>
+          <button data-vue="a-verifier">À vérifier <b id="nb-verifier">0</b></button>
+          <button data-vue="playlists">Playlists <b id="nb-playlists">0</b></button>
+        </div>
+      </div>
+      <div class="entete-playlist" id="entete-playlist" hidden>
+        <button class="icone" id="btn-retour" title="Toutes les playlists"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <b id="titre-playlist-ouverte"></b>
+        <button class="secondaire petit" id="btn-renommer">Renommer</button>
+        <button class="secondaire petit" id="btn-supprimer-playlist">Supprimer</button>
+      </div>
+      <ul class="liste" id="liste"></ul>
+      <div class="liste-vide" id="liste-vide" hidden>
+        <p>Aucun morceau pour l’instant.</p>
+        <button class="secondaire" id="btn-ouvrir-dossier">Ouvrir le dossier</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="voile" id="voile" hidden>
+    <div class="fenetre-aide" role="dialog" aria-labelledby="titre-aide">
+      <h2 id="titre-aide">Relier le dossier à Spotify</h2>
+      <ol>
+        <li><strong>Dans Spotify sur ce PC</strong>, ouvre Paramètres, section Fichiers locaux, et active « Afficher les fichiers locaux ».</li>
+        <li>
+          <strong>Clique sur « Ajouter une source »</strong> et choisis ce dossier :
+          <div class="chemin"><code id="chemin-aide"></code><button class="secondaire petit" id="btn-copier">Copier</button></div>
+        </li>
+        <li><strong>Désactive les autres sources</strong> (Téléchargements, Bibliothèque musicale) pour que seuls tes MP3 apparaissent.</li>
+      </ol>
+      <div class="boutons">
+        <button class="secondaire" id="btn-spotify">Ouvrir Spotify</button>
+        <button class="principal" id="btn-ok">C’est fait</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="voile" id="voile-playlist" hidden>
+    <div class="fenetre-aide" role="dialog" aria-labelledby="titre-playlist">
+      <h2 id="titre-playlist">Playlists automatiques</h2>
+      <p class="intro">Sans rien installer, tes morceaux apparaissent dans Spotify, dans Fichiers locaux. Pour qu’ils rejoignent aussi tes playlists tout seuls, avec leur nom et leur image, Platine ajoute une extension à Spotify.</p>
+      <p class="avertissement">Platine installe pour cela Spicetify, un outil open source qui modifie l’app Spotify de cet ordinateur. Spotify ne l’autorise pas officiellement mais le tolère. Après une mise à jour de Spotify, Platine te propose de réactiver. « Désactiver » remet Spotify d’origine.</p>
+      <label class="champ-plein"><span>Nom de la playlist</span><input id="nom-playlist" spellcheck="false" /></label>
+      <label class="case"><input type="checkbox" id="par-album" /><span>Une playlist par album<small>Dès que deux morceaux ont le même album dans leur fiche.</small></span></label>
+      <p class="etat-spicetify" id="etat-spicetify"></p>
+      <div class="boutons">
+        <button class="secondaire" id="btn-playlist-fermer">Fermer</button>
+        <button class="secondaire" id="btn-playlist-desactiver" hidden>Désactiver</button>
+        <button class="principal" id="btn-playlist-activer">Activer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bandeau" id="bandeau" hidden>
+    <span>Spotify a été mis à jour : les playlists automatiques sont en pause.</span>
+    <button class="principal petit" id="btn-reparer">Réactiver</button>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+  <div class="depot" id="depot" hidden><span>Lâche pour ajouter à ton dossier</span></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
