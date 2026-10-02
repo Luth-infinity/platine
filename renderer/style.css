@@ -350,3 +350,4 @@ input::placeholder { color: var(--tres-doux); }
 /* macOS : feux tricolores à gauche, rien à droite */
 [data-plateforme="darwin"] .barre { padding: 0 16px 0 84px; }
 .pastille.maj { color: var(--texte); background: var(--surface); box-shadow: inset 0 0 0 1px var(--bord-fort); }
+.boutons .espace { flex: 1; }

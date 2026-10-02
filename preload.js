@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('platine', {
   choisirImage: () => appeler('pochette:choisir'),
   enregistrerPerso: (perso) => appeler('perso:enregistrer', perso),
   rapportSpotify: () => appeler('spotify:rapport'),
+  nettoyerSpotify: () => appeler('spotify:nettoyer'),
   masquerAlbum: (nom) => appeler('album:masquer', nom),
   pochettePlaylist: (cle, image) => appeler('playlist:pochette', cle, image),
   afficherAlbum: (nom) => appeler('album:afficher', nom),

@@ -1017,3 +1017,12 @@ $('#sans-accents').addEventListener('change', async (e) => {
     toast('Les infos de tes morceaux vont être simplifiées.')
   }
 })
+
+$('#btn-nettoyer').addEventListener('click', async () => {
+  try {
+    const n = await api.nettoyerSpotify()
+    if (!n) toast('Rien à nettoyer pour l’instant.')
+  } catch (err) {
+    toast(err.message)
+  }
+})

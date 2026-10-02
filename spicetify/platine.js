@@ -161,7 +161,8 @@
     enCours = true
     try {
       const c = await consignes()
-      let locaux = utilisables(await P.LocalFilesAPI.getTracks())
+      const bruts = await P.LocalFilesAPI.getTracks()
+      let locaux = utilisables(bruts)
       // Spotify garde en mémoire les anciennes versions d'un fichier dont
       // Platine a corrigé les infos. Quand Platine répond, on ne garde que
       // les morceaux qui correspondent à un vrai fichier du dossier.
@@ -180,8 +181,11 @@
         }
         locaux = meilleures
       }
+      // Fiches de Spotify qui ne correspondent à aucun vrai fichier (anciennes
+      // versions) : Platine fera reconstruire l'index quand Spotify sera fermé.
+      const fantomes = c.liee && Array.isArray(c.pistes) ? Math.max(0, bruts.length - locaux.length) : 0
       illisibles = []
-      const rapport = { vu: Date.now(), locaux: locaux.length, playlists: [], supprimees: [] }
+      const rapport = { vu: Date.now(), locaux: locaux.length, fantomes, playlists: [], supprimees: [] }
 
       // Playlists supprimées dans Platine.
       for (const s of c.supprimees || []) {

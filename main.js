@@ -5,6 +5,7 @@ const biblio = require('./lib/bibliotheque')
 const spicetify = require('./lib/spicetify')
 const liaison = require('./lib/liaison')
 const maj = require('./lib/maj')
+const indexSpotify = require('./lib/indexSpotify')
 
 const FICHIER_REGLAGES = path.join(app.getPath('userData'), 'reglages.json')
 // Images de playlists choisies dans Platine, une par playlist (clé de l'extension).
@@ -92,6 +93,10 @@ function creerTray() {
       { label: 'Ouvrir Platine', click: montrer },
       { label: 'Ouvrir le dossier', click: () => shell.openPath(lireReglages().dossier) },
       { label: 'Faire relire le dossier par Spotify', click: () => relireTout() },
+      {
+        label: 'Nettoyer les doublons de Spotify',
+        click: () => nettoyerIndex({ manuel: true }).catch((err) => envoyer('erreur', err.message))
+      },
       { type: 'separator' },
       {
         label: 'Lancer au démarrage de Windows',
@@ -134,6 +139,7 @@ function surveiller() {
   for (const nom of fs.readdirSync(dossier)) {
     if (nom.endsWith('.platine')) fs.renameSync(path.join(dossier, nom), path.join(dossier, nom.slice(0, -'.platine'.length)))
   }
+  remettreTout()
   const attente = new Map()
   surveillant = fs.watch(dossier, { recursive: true }, (_type, nom) => {
     if (!nom) return
@@ -164,18 +170,69 @@ function faireRelire(fichier, delai = 3000) {
   relectures.set(fichier, etat)
 }
 
+// Le fichier sort dans un dossier de Platine, hors de la musique : Spotify
+// indexait aussi les « .mp3.platine » laissés dans le dossier, et chacun
+// devenait un doublon dans ses fichiers locaux.
+const DOSSIER_RELECTURE = path.join(app.getPath('userData'), 'relecture')
+const MANIFESTE = path.join(DOSSIER_RELECTURE, 'en-cours.json')
+
+function lireManifeste() {
+  try {
+    return JSON.parse(fs.readFileSync(MANIFESTE, 'utf8'))
+  } catch {
+    return {}
+  }
+}
+
+function ecrireManifeste(m) {
+  fs.mkdirSync(DOSSIER_RELECTURE, { recursive: true })
+  fs.writeFileSync(MANIFESTE, JSON.stringify(m, null, 2))
+}
+
+// Déplace, y compris d'un disque à l'autre (rename échoue alors).
+function deplacer(de, vers) {
+  try {
+    fs.renameSync(de, vers)
+  } catch (err) {
+    if (err.code !== 'EXDEV') throw err
+    fs.copyFileSync(de, vers)
+    fs.unlinkSync(de)
+  }
+}
+
+// Remet en place tout fichier resté dehors (Platine fermée en pleine relecture).
+function remettreTout() {
+  const m = lireManifeste()
+  for (const [cache, original] of Object.entries(m)) {
+    try {
+      if (fs.existsSync(cache) && !fs.existsSync(original)) deplacer(cache, original)
+    } catch {}
+    delete m[cache]
+  }
+  ecrireManifeste(m)
+}
+
 async function cacherPuisRemettre(fichier, etat) {
-  const cache = `${fichier}.platine`
+  fs.mkdirSync(DOSSIER_RELECTURE, { recursive: true })
+  const cache = path.join(DOSSIER_RELECTURE, `${Date.now()}-${path.basename(fichier)}`)
   try {
     ecritsParMoi.set(fichier, Date.now() + 30000)
-    fs.renameSync(fichier, cache)
+    ecrireManifeste({ ...lireManifeste(), [cache]: fichier })
+    deplacer(fichier, cache)
     etat.cache = cache
     await attente(8000)
   } catch (err) {
     console.error('[relecture]', err.message)
   } finally {
-    // On ne laisse jamais le fichier caché.
-    if (fs.existsSync(cache) && !fs.existsSync(fichier)) fs.renameSync(cache, fichier)
+    // On ne laisse jamais le fichier dehors.
+    try {
+      if (fs.existsSync(cache) && !fs.existsSync(fichier)) deplacer(cache, fichier)
+      const m = lireManifeste()
+      delete m[cache]
+      ecrireManifeste(m)
+    } catch (err) {
+      console.error('[relecture]', err.message)
+    }
     ecritsParMoi.set(fichier, Date.now() + 3000)
     relectures.delete(fichier)
     liaison.signaler()
@@ -371,6 +428,32 @@ gerer('spicetify:desactiver', async () => {
   return r
 })
 
+// Doublons dans les fichiers locaux de Spotify : l'extension les compte, et
+// dès que Spotify est fermé, Platine fait reconstruire son index.
+let nettoyageEnAttente = false
+
+async function nettoyerIndex({ manuel = false } = {}) {
+  if (await spicetify.spotifyOuvert()) {
+    if (manuel) throw new Error('Ferme d’abord Spotify : son index ne se reconstruit que Spotify fermé.')
+    return 0
+  }
+  const { dossier } = lireReglages()
+  const audio = (await biblio.lister(dossier)).filter((f) => f.toLowerCase().endsWith('.mp3'))
+  audio.forEach((f) => ecritsParMoi.set(f, Date.now() + 10000))
+  const n = indexSpotify.reconstruire(path.join(app.getPath('userData'), 'sauvegardes-spotify'), audio)
+  nettoyageEnAttente = false
+  if (dernierRapport) dernierRapport.fantomes = 0
+  if (n) envoyer('erreur', 'Doublons de Spotify nettoyés : ses fichiers locaux seront à jour à sa prochaine ouverture.')
+  return n
+}
+
+gerer('spotify:nettoyer', () => nettoyerIndex({ manuel: true }))
+
+setInterval(async () => {
+  if (dernierRapport?.fantomes > 0) nettoyageEnAttente = true
+  if (nettoyageEnAttente) await nettoyerIndex().catch(() => {})
+}, 30 * 1000)
+
 // Après une mise à jour, Spotify revient d'origine et l'extension disparaît :
 // Spotify est ouvert mais n'envoie plus de rapport. On propose de réparer.
 let aReparer = false
@@ -429,9 +512,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('before-quit', () => {
     quitter = true
     // Jamais de fichier laissé caché par une relecture en cours.
-    for (const [fichier, etat] of relectures) {
-      if (etat.cache && fs.existsSync(etat.cache) && !fs.existsSync(fichier)) fs.renameSync(etat.cache, fichier)
-    }
+    remettreTout()
   })
   app.on('window-all-closed', () => {})
 }
